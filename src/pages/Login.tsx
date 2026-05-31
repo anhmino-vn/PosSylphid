@@ -13,7 +13,9 @@ export function Login() {
   const [error, setError] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [confirmPassword, setConfirmPassword] = React.useState('');
   const [showEmailLogin, setShowEmailLogin] = React.useState(false);
+  const [isRegister, setIsRegister] = React.useState(false);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -38,20 +40,88 @@ export function Login() {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError('Vui lòng nhập đầy đủ email và mật khẩu');
+      setError('Vui lòng nhập đầy đủ tài khoản và mật khẩu');
+      return;
+    }
+    setLoading(true);
+    setError('');
+
+    let loginEmail = email.trim();
+    let loginPassword = password;
+
+    // Special bypass for admin/admin
+    if (loginEmail.toLowerCase() === 'admin') {
+      loginEmail = 'admin@sylphid.com';
+      if (loginPassword === 'admin') {
+        loginPassword = 'admin123'; // Firebase requires at least 6 characters
+      }
+    }
+
+    try {
+      const { signInWithEmailAndPassword } = await import('firebase/auth');
+      let result;
+      try {
+        result = await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      } catch (err: any) {
+        // If user not found and it's the admin account, let's create it automatically!
+        if (loginEmail === 'admin@sylphid.com' && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials')) {
+          try {
+            const { createUserWithEmailAndPassword } = await import('firebase/auth');
+            result = await createUserWithEmailAndPassword(auth, loginEmail, loginPassword);
+          } catch (createErr: any) {
+            if (createErr.code === 'auth/email-already-in-use') {
+              throw new Error('Mật khẩu tài khoản admin không chính xác.');
+            } else {
+              throw createErr;
+            }
+          }
+        } else {
+          throw err;
+        }
+      }
+      await setupUserDoc(result.user);
+    } catch (err: any) {
+      if (err.message === 'Mật khẩu tài khoản admin không chính xác.') {
+        setError(err.message);
+      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        setError('Tài khoản hoặc mật khẩu không chính xác.');
+      } else if (err.code === 'auth/operation-not-allowed') {
+        setError('Đăng nhập bằng Email chưa được bật. Vui lòng liên hệ Admin cấu hình Firebase Console.');
+      } else {
+        setError('Đăng nhập thất bại. Vui lòng kiểm tra kết nối.');
+      }
+      console.error(err);
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password || !confirmPassword) {
+      setError('Vui lòng điền đầy đủ các thông tin');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Mật khẩu phải chứa ít nhất 6 ký tự');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp');
       return;
     }
     setLoading(true);
     setError('');
     try {
-      const { signInWithEmailAndPassword } = await import('firebase/auth');
-      const result = await signInWithEmailAndPassword(auth, email, password);
+      const { createUserWithEmailAndPassword } = await import('firebase/auth');
+      const result = await createUserWithEmailAndPassword(auth, email, password);
       await setupUserDoc(result.user);
     } catch (err: any) {
-      if (err.code === 'auth/operation-not-allowed') {
-        setError('Đăng nhập bằng Email chưa được bật. Vui lòng liên hệ Admin cấu hình Firebase Console.');
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Địa chỉ email này đã được đăng ký sử dụng.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Định dạng email không chính xác.');
       } else {
-        setError('Email hoặc mật khẩu không chính xác.');
+        setError('Đăng ký thất bại. Vui lòng kiểm tra kết nối.');
       }
       console.error(err);
       setLoading(false);
@@ -65,7 +135,7 @@ export function Login() {
       const docSnap = await getDoc(docRef);
 
       if (!docSnap.exists()) {
-        const isAdmin = user.email === 'anhmino.it@gmail.com' || user.email === 'ngocanhvux4@gmail.com';
+        const isAdmin = user.email === 'anhmino.it@gmail.com' || user.email === 'ngocanhvux4@gmail.com' || user.email === 'admin@sylphid.com';
         
         const defaultPermissions: UserPermissions = {
           products: { view: true, add: isAdmin, edit: isAdmin, delete: isAdmin },
@@ -87,7 +157,7 @@ export function Login() {
         });
       } else {
         // Ensure admin email always has admin role and full permissions
-        if (user.email === 'anhmino.it@gmail.com' || user.email === 'ngocanhvux4@gmail.com') {
+        if (user.email === 'anhmino.it@gmail.com' || user.email === 'ngocanhvux4@gmail.com' || user.email === 'admin@sylphid.com') {
           const profile = docSnap.data();
           if (profile.role !== 'admin' || !profile.permissions?.reports?.view) {
             await setDoc(docRef, { 
@@ -185,14 +255,102 @@ export function Login() {
               Đăng nhập bằng Email
             </button>
           ) : (
-            <form onSubmit={handleEmailLogin} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full h-14 px-5 bg-slate-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-900" />
-              <input type="password" placeholder="Mật khẩu" value={password} onChange={e => setPassword(e.target.value)} required className="w-full h-14 px-5 bg-slate-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-900" />
-              <button type="submit" disabled={loading} className="w-full h-14 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/30 active:scale-95 flex items-center justify-center gap-3 uppercase tracking-widest text-sm disabled:opacity-50">
-                <LogIn className="w-5 h-5" />
-                Đăng nhập
-              </button>
-            </form>
+            <div className="space-y-6">
+              <div className="flex bg-slate-100 p-1 rounded-2xl">
+                <button 
+                  type="button"
+                  onClick={() => { setIsRegister(false); setError(''); }}
+                  className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${!isRegister ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  Đăng nhập
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => { setIsRegister(true); setError(''); }}
+                  className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${isRegister ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  Đăng ký
+                </button>
+              </div>
+
+              {!isRegister ? (
+                <form onSubmit={handleEmailLogin} className="space-y-4 animate-in fade-in duration-300">
+                  <input 
+                    type="text" 
+                    placeholder="Tài khoản hoặc Email" 
+                    value={email} 
+                    onChange={e => setEmail(e.target.value)} 
+                    required 
+                    className="w-full h-14 px-5 bg-slate-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-900 text-sm" 
+                  />
+                  <input 
+                    type="password" 
+                    placeholder="Mật khẩu" 
+                    value={password} 
+                    onChange={e => setPassword(e.target.value)} 
+                    required 
+                    className="w-full h-14 px-5 bg-slate-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-900 text-sm" 
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={loading} 
+                    className="w-full h-14 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/30 active:scale-95 flex items-center justify-center gap-3 uppercase tracking-widest text-sm disabled:opacity-50"
+                  >
+                    <LogIn className="w-5 h-5" />
+                    Đăng nhập
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => { setShowEmailLogin(false); setError(''); }} 
+                    className="w-full text-center text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors py-2 uppercase tracking-wider"
+                  >
+                    Quay lại
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleRegister} className="space-y-4 animate-in fade-in duration-300">
+                  <input 
+                    type="email" 
+                    placeholder="Địa chỉ Email" 
+                    value={email} 
+                    onChange={e => setEmail(e.target.value)} 
+                    required 
+                    className="w-full h-14 px-5 bg-slate-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-900 text-sm" 
+                  />
+                  <input 
+                    type="password" 
+                    placeholder="Mật khẩu (tối thiểu 6 ký tự)" 
+                    value={password} 
+                    onChange={e => setPassword(e.target.value)} 
+                    required 
+                    className="w-full h-14 px-5 bg-slate-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-900 text-sm" 
+                  />
+                  <input 
+                    type="password" 
+                    placeholder="Xác nhận mật khẩu" 
+                    value={confirmPassword} 
+                    onChange={e => setConfirmPassword(e.target.value)} 
+                    required 
+                    className="w-full h-14 px-5 bg-slate-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-900 text-sm" 
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={loading} 
+                    className="w-full h-14 bg-emerald-600 text-white font-black rounded-2xl hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-500/30 active:scale-95 flex items-center justify-center gap-3 uppercase tracking-widest text-sm disabled:opacity-50"
+                  >
+                    <LogIn className="w-5 h-5" />
+                    Đăng ký tài khoản
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => { setShowEmailLogin(false); setError(''); }} 
+                    className="w-full text-center text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors py-2 uppercase tracking-wider"
+                  >
+                    Quay lại
+                  </button>
+                </form>
+              )}
+            </div>
           )}
         </div>
 
