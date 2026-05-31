@@ -1304,7 +1304,7 @@ export function Orders() {
                       </div>
                       <div>
                         <h2 className="text-sm md:text-xl font-black text-slate-900 tracking-tight uppercase">Hệ thống bán lẻ</h2>
-                        <p className="text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">LuxeFlow POS Terminal</p>
+                        <p className="text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">POS SYLPHID Terminal</p>
                       </div>
                     </div>
                     <button 

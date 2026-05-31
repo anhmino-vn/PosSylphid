@@ -25,6 +25,7 @@ import { auth } from "../lib/firebase";
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../App";
+import { SylphidLogo } from "./SylphidLogo";
 
 import {
   collection,
@@ -293,17 +294,8 @@ export function Layout() {
         )}
       >
         <div className="p-6 border-b border-white/10 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 flex items-center justify-center bg-blue-600 font-bold text-white">
-            {/* Note: User must upload icon.png into public/ for this to display */}
-            <img
-              src="/icon.png"
-              alt="POS SYLPHID Logo"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-                e.currentTarget.parentElement!.innerText = "P";
-              }}
-            />
+          <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center shadow-md">
+            <SylphidLogo className="w-full h-full" />
           </div>
           {isSidebarOpen && (
             <span className="font-bold text-xl tracking-tight text-white uppercase">

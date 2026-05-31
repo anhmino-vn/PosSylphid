@@ -5,6 +5,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { LogIn } from 'lucide-react';
+import { SylphidLogo } from '../components/SylphidLogo';
 
 export function Login() {
   const navigate = useNavigate();
@@ -78,7 +79,7 @@ export function Login() {
           uid: user.uid,
           email: user.email,
           role: isAdmin ? 'admin' : 'staff',
-          shopName: 'LuxeFlow Retail',
+          shopName: 'POS SYLPHID',
           permissions: defaultPermissions,
           status: 'active',
           createdAt: serverTimestamp(),
@@ -136,11 +137,16 @@ export function Login() {
         className="w-full max-w-md bg-white rounded-[32px] shadow-2xl p-10 relative z-10 overflow-hidden border border-white/20"
       >
         <div className="text-center mb-10">
-          <div className="inline-flex w-16 h-16 bg-blue-600 rounded-3xl items-center justify-center text-white font-black text-3xl mb-6 shadow-xl shadow-blue-500/30">
-            L
+          <div className="inline-flex items-center justify-center mb-6">
+            <SylphidLogo className="w-16 h-16 shadow-xl rounded-full" />
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">LuxeFlow</h1>
-          <p className="text-slate-500 mt-2 font-medium">Hệ thống quản trị bán hàng cao cấp</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight uppercase leading-tight">
+            POS SYLPHID
+          </h1>
+          <p className="text-slate-500 mt-2 font-semibold text-sm sm:text-base whitespace-pre-line leading-relaxed">
+            Hệ thống Quản lý
+            Trung tâm Sức khỏe
+          </p>
         </div>
 
         {error && (
@@ -191,7 +197,7 @@ export function Login() {
         </div>
 
         <p className="mt-10 text-center text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-          Bản quyền © 2024 LuxeFlow Retail Solutions
+          Bản quyền © 2024 POS SYLPHID Solutions
         </p>
       </motion.div>
     </div>

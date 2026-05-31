@@ -29,6 +29,7 @@ import { Referrers } from './pages/customers/Referrers';
 import { ReferredList } from './pages/customers/ReferredList';
 import { CommissionHistory } from './pages/customers/CommissionHistory';
 import { ReferralReport } from './pages/reports/ReferralReport';
+import { SylphidLogo } from './components/SylphidLogo';
 
 import { SettingsProvider } from './lib/settings';
 
@@ -106,14 +107,19 @@ export default function App() {
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 1, repeat: Infinity, repeatType: 'reverse', ease: "easeInOut" }}
-          className="w-20 h-20 bg-blue-600 rounded-[32px] flex items-center justify-center text-white text-4xl font-black shadow-2xl mb-8 relative"
+          className="w-20 h-20 flex items-center justify-center mb-8 relative"
         >
-          <div className="absolute inset-0 bg-blue-500 rounded-[32px] animate-ping opacity-20"></div>
-          L
+          <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping"></div>
+          <SylphidLogo className="w-20 h-20 shadow-2xl rounded-full relative z-10" />
         </motion.div>
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-slate-900 font-black tracking-[0.2em] text-sm uppercase">LuxeFlow</p>
-          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Đang khởi tạo hệ thống...</p>
+        <div className="flex flex-col items-center gap-2 px-6 text-center">
+          <p className="text-slate-900 font-black tracking-[0.2em] text-sm uppercase">POS SYLPHID</p>
+          <p className="text-slate-500 font-bold text-[11px] uppercase tracking-wider max-w-xs leading-relaxed">
+            Hệ thống Quản lý Trung tâm Sức khỏe
+          </p>
+          <p className="text-slate-400 font-medium text-[9px] uppercase tracking-widest mt-1">
+            Đang khởi tạo hệ thống...
+          </p>
         </div>
       </div>
     );
