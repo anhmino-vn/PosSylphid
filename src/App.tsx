@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
-  BrowserRouter as Router, 
+  HashRouter as Router, 
   Routes, 
   Route, 
   Navigate, 
@@ -128,7 +128,7 @@ export default function App() {
   return (
     <SettingsProvider>
       <AuthContext.Provider value={{ user, profile, loading }}>
-        <Router basename={import.meta.env.BASE_URL}>
+        <Router>
           <Routes>
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
             <Route element={user ? <Layout /> : <Navigate to="/login" />}>
